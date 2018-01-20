@@ -84,14 +84,12 @@ int main(int argc, char **argv) {
 	double matB[MAT_SIZE * MAT_SIZE] = {0};
 	double output[MAT_SIZE * MAT_SIZE] = {0};
 	int root = 0;
-
 	
 	MPI_Comm comm3D, commRow, commCol, commHeight;
 	
 	int coords3D[3];
 	int id3D;
 	int belongs[3];
-
 
 	MPI_Init(&argc, &argv);
 
@@ -111,8 +109,6 @@ int main(int argc, char **argv) {
 	dims[1] = round(s);
 	dims[2] = round(s);
 	mkdir(DIRERCTORY, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
- 
-
 
 	/* Create 3D Cartesian topology for processes */
 	MPI_Cart_create(MPI_COMM_WORLD, ndim, dims, period, 0, &comm3D);
@@ -175,12 +171,6 @@ int main(int argc, char **argv) {
 
 	mult(matA, matB, matC);
 
-	/*
-	if ((coords3D[0] == 1) && (coords3D[1] == 0) && (coords3D[2] == 0)) {
-		printMat(matA, matB, matC);
-	}
-	*/
-
 	/********************* REDUCE ********************/
 
 
@@ -188,22 +178,9 @@ int main(int argc, char **argv) {
 	MPI_Cart_rank(commHeight, &root, &originRank);
 	MPI_Reduce(matC, output, MAT_SIZE*MAT_SIZE, MPI_DOUBLE, MPI_SUM, originRank, commHeight);
 
-
-	/*
-	if ((coords3D[0] == 1) && (coords3D[1] == 1) && (coords3D[2] == 1)) {
-		printMatA(matC);
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
-	if ((coords3D[0] == 1) && (coords3D[1] == 1) && (coords3D[2] == 0)) {
-		printMatA(matC);
-		printMatA(output);
-	}
-	*/
-
-
 	mkdir(DIRERCTORY, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	if (coords3D[2] == 0) {
-		saveMat(DIRERCTORY, "output" , coords3D[0], coords3D[1], output);
+		saveMat(DIRERCTORY, "output" , coords3D[1], coords3D[0], output);
 	}
 
 	MPI_Finalize();
