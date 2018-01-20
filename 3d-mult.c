@@ -141,15 +141,8 @@ int main(int argc, char **argv) {
 			matB[i] = (rand() % 100) -50;
 		}
 		saveMat(DIRERCTORY, "input_B" , coords3D[2], coords3D[0], matB);
-
-		MPI_Cart_rank(commCol, coords3D + 1, &originRank);
-		MPI_Ibcast(matB, MAT_SIZE*MAT_SIZE, MPI_DOUBLE, originRank, commCol, &requests[1]);
-		
-	} else {
-		MPI_Cart_rank(commCol, &root, &originRank);
-		MPI_Ibcast(matB, MAT_SIZE*MAT_SIZE, MPI_DOUBLE, originRank, commCol, &requests[1]);
-
 	}
+
 	if (coords3D[0] == 0) {
 		// generate matrix
 		for (int i = 0; i < MAT_SIZE * MAT_SIZE; ++i) {
@@ -157,14 +150,19 @@ int main(int argc, char **argv) {
 		}
 		saveMat(DIRERCTORY, "input_A" , coords3D[1], coords3D[2], matA);
 
-		MPI_Cart_rank(commRow, coords3D, &originRank);
-		MPI_Ibcast(matA, MAT_SIZE*MAT_SIZE, MPI_DOUBLE, originRank, commRow, &requests[0]);
-
-	} else {
-		MPI_Cart_rank(commRow, &root, &originRank);
-		MPI_Ibcast(matA, MAT_SIZE*MAT_SIZE, MPI_DOUBLE, originRank, commRow, &requests[0]);
-
 	}
+
+	/********************* START BENCHMARK **************/
+	MPI_Barrier(MPI_COMM_WORLD);
+	double startTIme = MPI_Wtime();
+
+
+	MPI_Cart_rank(commRow, &root, &originRank);
+	MPI_Ibcast(matA, MAT_SIZE*MAT_SIZE, MPI_DOUBLE, originRank, commRow, &requests[0]);
+
+	MPI_Cart_rank(commCol, &root, &originRank);
+	MPI_Ibcast(matB, MAT_SIZE*MAT_SIZE, MPI_DOUBLE, originRank, commCol, &requests[1]);
+
 
 	MPI_Wait(&requests[1], &status[1]);
 	MPI_Wait(&requests[0], &status[0]);
@@ -178,7 +176,14 @@ int main(int argc, char **argv) {
 	MPI_Cart_rank(commHeight, &root, &originRank);
 	MPI_Reduce(matC, output, MAT_SIZE*MAT_SIZE, MPI_DOUBLE, MPI_SUM, originRank, commHeight);
 
-	mkdir(DIRERCTORY, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	/********************* END BENCHMARK **************/
+	MPI_Barrier(MPI_COMM_WORLD);
+	double stopTime = MPI_Wtime();
+
+	if (rank == 0) {
+		printf("Total time %lf seconds\n", stopTime-startTIme);
+	}
+
 	if (coords3D[2] == 0) {
 		saveMat(DIRERCTORY, "output" , coords3D[1], coords3D[0], output);
 	}
