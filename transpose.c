@@ -2,8 +2,27 @@
 #include <math.h>
 #include <stdlib.h>
 #include "mpi.h"
+#include <sys/stat.h>
 
 #define MAT_SIZE 5
+#define EPS 0.00000001
+#define DIRERCTORY "transpose"
+
+void saveMat(char* dir, char* type, int row, int col, double* out) { 
+
+	// open input file and save the matrix
+	char szFileName[255] = {0};
+	sprintf(szFileName, "%s/transpose_%s_%d_%d.txt", dir, type, row, col);
+	FILE *f = fopen(szFileName, "w");
+	for (int i = 0; i<MAT_SIZE; ++i) {
+		for (int j = 0; j<MAT_SIZE; ++j) {
+			fprintf(f, "%f ", out[i*MAT_SIZE+j]);
+		}
+		fprintf(f, "\n ");
+	}
+	fclose(f);
+	
+}
 
 int main(int argc, char **argv) {
 	int rank, size;
@@ -15,7 +34,7 @@ int main(int argc, char **argv) {
 
 	// make sure the number of processes has root
 	float s = sqrt(size);
-	if ((ceil(s) -s) != 0) {
+	if ((ceil(s) -s) >= EPS) {
 		if (rank == 0) {
 			printf("%d has no root\n", size);
 		}
@@ -34,9 +53,12 @@ int main(int argc, char **argv) {
 	int x= rank / s;
 	int y = ((int)rank % (int)s);
 
+
+	mkdir(DIRERCTORY, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
 	// open input file and save the matrix
 	char szFileName[255] = {0};
-	sprintf(szFileName, "input_%d_%d.txt", x,y);
+	sprintf(szFileName, "%s/input_%d_%d.txt",DIRERCTORY , x, y);
 	FILE *f = fopen(szFileName, "w");
 	for(int i = 1; i<= MAT_SIZE * MAT_SIZE; ++i){
 		fprintf(f, "%lf ", mat[i-1]);
@@ -46,7 +68,7 @@ int main(int argc, char **argv) {
 	}
 	
 	// open output file and save the matrix
-	sprintf(szFileName, "output_%d_%d.txt", y,x);
+	sprintf(szFileName, "%s/output_%d_%d.txt",DIRERCTORY , y, x);
 	f = fopen(szFileName, "w");
 	for(int i = 1; i<= MAT_SIZE; ++i){
 		for(int j = 1; j<= MAT_SIZE; ++j){
